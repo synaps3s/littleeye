@@ -1,8 +1,6 @@
 <div align="center">
 
-# LittleEye
-
-<img src="littleye.png" alt="LittleEye" width="160">
+<img src="banner.png" alt="LittleEye" width="800">
 
 **Configuration drift detection for Linux servers**
 
