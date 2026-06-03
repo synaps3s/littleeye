@@ -222,3 +222,15 @@ littleeye/
 ```bash
 PYTHONPATH=. pytest
 ```
+
+---
+
+## Security
+
+Do not expose the dashboard directly on the internet without a reverse proxy. The agent token is a secret: treat it like a password, do not commit it to version control, and rotate it if compromised.
+
+In production, always put HTTPS in front of the dashboard. Without it, agent tokens travel in plaintext. Tailscale or WireGuard are the simplest options for private deployments. If you use Nginx or Cloudflare, follow the examples in the Networking section.
+
+The `curl | sudo bash` install method is convenient but implies trust in this repository. If that is not acceptable for your environment, use the manual setup instead.
+
+The agent endpoint `/api/agent/report` has no rate limiting by default. If you expose the dashboard on a public address, consider adding rate limiting at the reverse proxy level.
