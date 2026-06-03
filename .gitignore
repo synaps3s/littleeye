@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Test cache
+.pytest_cache/
+
+# Data directories (baselines, reports, database)
+data/
+
+# Configuration with real tokens
+config.yaml
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal

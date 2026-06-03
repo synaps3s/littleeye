@@ -1,0 +1,6 @@
+pyyaml
+schedule
+requests
+jinja2
+rich
+pytest

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}LittleEye - {{ server.hostname }} History{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2" style="font-size: 0.85rem;">
+            <li class="breadcrumb-item"><a href="/servers" class="text-decoration-none">Servers</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ server.hostname }}</li>
+        </ol>
+    </nav>
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <h1 class="pf-page-title mb-0 me-3">{{ server.hostname }}</h1>
+            <span class="tag-{{ server.status.lower() }}">
+                <span class="dot-{{ server.status.lower() }}"></span>{{ server.status | upper }}
+            </span>
+        </div>
+        <div class="small text-muted font-monospace">ID: {{ server.id }}</div>
+    </div>
+</div>
+
+<!-- Server Details Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="category-label mb-1">Operating System</div>
+            <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ server.os_name or "Linux" }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="category-label mb-1">Kernel Version</div>
+            <div class="font-monospace fw-bold text-dark" style="font-size: 0.95rem;">{{ server.kernel or "Unknown" }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="category-label mb-1">Architecture</div>
+            <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ server.arch or "Unknown" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Section -->
+<div class="row">
+    <div class="col-12">
+        <h2 class="h5 mb-4 fw-bold text-dark pb-2 border-bottom">Drift History Timeline</h2>
+        
+        {% if history | length == 0 %}
+        <div class="card p-4 text-center text-muted">
+            No history reports recorded for this server yet. Run a drift check on the agent.
+        </div>
+        {% else %}
+        <div class="timeline">
+            {% for report in history %}
+            {% set findings_len = report.findings | length %}
+            <div class="timeline-item {% if findings_len > 0 %}item-drift{% else %}item-clean{% endif %}">
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="font-monospace text-secondary small">{{ report.timestamp | format_datetime }}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if findings_len > 0 %}
+                            <a href="/server/{{ server.id }}/report/{{ report.timestamp }}/html" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-3">Download Report</a>
+                            <span class="tag-critical">
+                                <span class="dot-critical"></span>{{ findings_len }} Drift Items
+                            </span>
+                            {% else %}
+                            <span class="tag-clean">
+                                <span class="dot-clean"></span>Clean
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if findings_len == 0 %}
+                        <p class="text-success mb-0 small fw-semibold">No configuration drift detected at this check-in.</p>
+                        {% else %}
+                        <details class="w-100">
+                            <summary class="py-1">Show Config Diffs</summary>
+                            <div class="mt-3">
+                                {% for finding in report.findings %}
+                                <div class="mb-3 p-3 bg-white border" style="border-color: var(--pf-global--border-color--200) !important;">
+                                    <!-- Finding Header -->
+                                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                        <div>
+                                            <span class="category-label me-2">{{ finding.category }}</span>
+                                            <code class="text-dark fw-bold" style="font-size: 0.95rem;">{{ finding.field }}</code>
+                                        </div>
+                                        <span class="tag-{{ finding.severity.lower() }}">
+                                            <span class="dot-{{ finding.severity.lower() }}"></span>{{ finding.severity }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Finding Body (Side-by-Side Diff Table / Text Value Comparison) -->
+                                    <div class="finding-body">
+                                        {% if finding.file_diff %}
+                                        <!-- Side-by-Side File Content Diff -->
+                                        <div class="border overflow-auto bg-white" style="max-height: 450px; border-color: var(--pf-global--border-color--200) !important;">
+                                            <table class="diff-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th colspan="2">Baseline (Old)</th>
+                                                        <th colspan="2">Current (New)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for line in finding.file_diff %}
+                                                    <tr class="diff-{{ line.type }}">
+                                                        <td class="diff-line-num">{% if line.left_no %}{{ line.left_no }}{% endif %}</td>
+                                                        <td class="diff-text">{% if line.left_text %}{{ line.left_text }}{% endif %}</td>
+                                                        <td class="diff-line-num">{% if line.right_no %}{{ line.right_no }}{% endif %}</td>
+                                                        <td class="diff-text">{% if line.right_text %}{{ line.right_text }}{% endif %}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% else %}
+                                        <!-- Plain Text Comparison -->
+                                        <div class="row g-3">
+                                            <div class="col-md-6 border-end">
+                                                <small class="text-muted d-block mb-1">Old Value:</small>
+                                                {% if finding.old_value is not none %}
+                                                <pre class="code-box mb-0 text-break text-muted font-monospace" style="font-size: 0.8rem; white-space: pre-wrap; padding: 0.5rem; background-color: #f7f9fa; border: 1px solid var(--pf-global--border-color--200);">{{ finding.old_value }}</pre>
+                                                {% else %}
+                                                <span class="text-secondary font-monospace" style="font-size: 0.8rem;">[none]</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted d-block mb-1">New Value:</small>
+                                                {% if finding.new_value is not none %}
+                                                <pre class="code-box mb-0 text-break text-dark font-monospace" style="font-size: 0.8rem; white-space: pre-wrap; padding: 0.5rem; background-color: #ffffff; border: 1px solid var(--pf-global--border-color--200);">{{ finding.new_value }}</pre>
+                                                {% else %}
+                                                <span class="text-secondary font-monospace" style="font-size: 0.8rem;">[none]</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

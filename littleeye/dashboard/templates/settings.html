@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}LittleEye - Settings{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h1 class="pf-page-title">Settings</h1>
+    <p class="pf-page-subtitle">Configure outbound alert channels (Telegram, Custom Webhook) and manage authorization tokens.</p>
+</div>
+
+{% if success == 'saved' %}
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 0px; border-left: 4px solid var(--pf-global--success-color);">
+    Notification settings saved successfully.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% elif success == 'token_added' %}
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 0px; border-left: 4px solid var(--pf-global--success-color);">
+    Agent authorization token added.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% elif success == 'token_deleted' %}
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 0px; border-left: 4px solid var(--pf-global--success-color);">
+    Agent authorization token deleted.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Alert Configurations -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-none">
+            <div class="card-header">
+                <h5 class="card-title">Alerting Channels</h5>
+            </div>
+            <div class="card-body">
+                <form id="settings-form" action="/settings" method="post">
+                    <!-- Telegram settings -->
+                    <div class="mb-4 pb-4 border-bottom">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="telegram_enabled" name="telegram_enabled" value="true" {% if config.telegram_enabled %}checked{% endif %}>
+                            <label class="form-check-label h6 fw-bold text-dark" for="telegram_enabled">Telegram Notifications</label>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="telegram_token" class="form-label small fw-bold">Telegram Bot Token</label>
+                                <input type="password" class="form-control" id="telegram_token" name="telegram_token" value="{{ config.telegram_token }}" placeholder="123456:ABC-DEF1234ghIkl-zyx57W">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telegram_chat_id" class="form-label small fw-bold">Telegram Chat ID</label>
+                                <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id" value="{{ config.telegram_chat_id }}" placeholder="-100123456789">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" id="btn-test-telegram" class="btn btn-sm btn-outline-primary">Test Telegram Alert</button>
+                            <span id="telegram-test-status" class="ms-2 small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Webhook settings -->
+                    <div class="mb-4 pb-4 border-bottom">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="webhook_enabled" name="webhook_enabled" value="true" {% if config.webhook_enabled %}checked{% endif %}>
+                            <label class="form-check-label h6 fw-bold text-dark" for="webhook_enabled">Custom Webhook Integration (POST JSON)</label>
+                        </div>
+                        <div class="mb-3">
+                            <label for="webhook_url" class="form-label small fw-bold">Webhook URL</label>
+                            <input type="url" class="form-control" id="webhook_url" name="webhook_url" value="{{ config.webhook_url }}" placeholder="https://n8n.mycompany.local/webhook/drift-alerts">
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" id="btn-test-webhook" class="btn btn-sm btn-outline-primary">Test Webhook Integration</button>
+                            <span id="webhook-test-status" class="ms-2 small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Threshold settings -->
+                    <div class="mb-4">
+                        <label for="alert_severity_threshold" class="form-label h6 fw-bold text-dark">Alert Severity Threshold</label>
+                        <select class="form-select" id="alert_severity_threshold" name="alert_severity_threshold">
+                            <option value="info" {% if config.alert_severity_threshold == 'info' %}selected{% endif %}>Info (Alert on all changes)</option>
+                            <option value="warning" {% if config.alert_severity_threshold == 'warning' %}selected{% endif %}>Warning (Alert on Warning and Critical)</option>
+                            <option value="critical" {% if config.alert_severity_threshold == 'critical' %}selected{% endif %}>Critical (Alert on Critical only)</option>
+                        </select>
+                        <div class="form-text small text-muted">Outbound notifications will only be triggered for findings that meet or exceed this level.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4">Save Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Management -->
+    <div class="col-lg-4">
+        <div class="card shadow-none mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Agent Access Tokens</h5>
+            </div>
+            <div class="card-body">
+                <form action="/settings/token/add" method="post" class="mb-4">
+                    <div class="mb-2">
+                        <label for="token" class="form-label small fw-bold">Token Value</label>
+                        <input type="text" class="form-control form-control-sm" id="token" name="token" required placeholder="e.g. web-node-token-xyz">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label small fw-bold">Host / Description</label>
+                        <input type="text" class="form-control form-control-sm" id="description" name="description" required placeholder="e.g. Production Web Frontend">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-success w-100">Add Token</button>
+                </form>
+
+                <h6 class="fw-bold border-bottom pb-2 text-dark small" style="letter-spacing: 0.05em; text-transform: uppercase;">Active Tokens</h6>
+                <div class="list-group list-group-flush">
+                    {% if tokens | length == 0 %}
+                    <div class="text-center text-muted small py-2">No active tokens.</div>
+                    {% else %}
+                    {% for t in tokens %}
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-start py-2">
+                        <div class="me-auto overflow-hidden">
+                            <div class="fw-bold text-truncate text-dark font-monospace" style="max-width: 220px; font-size: 0.85rem;">{{ t.token }}</div>
+                            <span class="small text-muted">{{ t.description }}</span>
+                        </div>
+                        {% if t.token != 'default-agent-token' %}
+                        <form action="/settings/token/delete" method="post" onsubmit="return confirm('Are you sure you want to delete this token?');" class="ms-2">
+                            <input type="hidden" name="token" value="{{ t.token }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.7rem;">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-none">
+            <div class="card-header">
+                <h5 class="card-title">Automatic Agent Installation</h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">Run this single-line command on your remote Linux host to automatically download, install, and run the agent daemon:</p>
+                <div class="code-box" style="font-size: 0.725rem; white-space: pre-wrap; word-break: break-all;">curl -sSL https://raw.githubusercontent.com/synaps3s/littleeye/main/install_agent.sh | sudo bash -s -- --url http://&lt;dashboard-ip&gt;:8000 --token &lt;token&gt;</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Test Telegram Alert
+        const btnTestTelegram = document.getElementById('btn-test-telegram');
+        const telegramStatus = document.getElementById('telegram-test-status');
+        
+        btnTestTelegram.addEventListener('click', function () {
+            const token = document.getElementById('telegram_token').value;
+            const chat_id = document.getElementById('telegram_chat_id').value;
+            
+            if (!token || !chat_id) {
+                telegramStatus.textContent = 'Error: Token and Chat ID are required for testing.';
+                telegramStatus.className = 'ms-2 small text-danger';
+                return;
+            }
+            
+            telegramStatus.textContent = 'Sending test...';
+            telegramStatus.className = 'ms-2 small text-muted';
+            
+            const formData = new FormData();
+            formData.append('telegram_token', token);
+            formData.append('telegram_chat_id', chat_id);
+            
+            fetch('/settings/test/telegram', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok) {
+                    telegramStatus.textContent = 'Success: Test alert sent.';
+                    telegramStatus.className = 'ms-2 small text-success';
+                } else {
+                    telegramStatus.textContent = 'Error: ' + (data.detail || 'Failed to send.');
+                    telegramStatus.className = 'ms-2 small text-danger';
+                }
+            })
+            .catch(error => {
+                telegramStatus.textContent = 'Error: Request failed.';
+                telegramStatus.className = 'ms-2 small text-danger';
+            });
+        });
+
+        // Test Webhook Alert
+        const btnTestWebhook = document.getElementById('btn-test-webhook');
+        const webhookStatus = document.getElementById('webhook-test-status');
+        
+        btnTestWebhook.addEventListener('click', function () {
+            const url = document.getElementById('webhook_url').value;
+            
+            if (!url) {
+                webhookStatus.textContent = 'Error: Webhook URL is required.';
+                webhookStatus.className = 'ms-2 small text-danger';
+                return;
+            }
+            
+            webhookStatus.textContent = 'Sending test...';
+            webhookStatus.className = 'ms-2 small text-muted';
+            
+            const formData = new FormData();
+            formData.append('webhook_url', url);
+            
+            fetch('/settings/test/webhook', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok) {
+                    webhookStatus.textContent = 'Success: Webhook payload sent.';
+                    webhookStatus.className = 'ms-2 small text-success';
+                } else {
+                    webhookStatus.textContent = 'Error: ' + (data.detail || 'Failed to send.');
+                    webhookStatus.className = 'ms-2 small text-danger';
+                }
+            })
+            .catch(error => {
+                webhookStatus.textContent = 'Error: Request failed.';
+                webhookStatus.className = 'ms-2 small text-danger';
+            });
+        });
+    });
+</script>
+{% endblock %}

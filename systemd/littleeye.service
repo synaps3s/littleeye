@@ -1,0 +1,14 @@
+[Unit]
+Description=LittleEye Configuration Drift Watch Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/littleeye
+ExecStart=/opt/littleeye/venv/bin/python3 -m littleeye.agent.cli daemon --config /etc/littleeye/config.yaml
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

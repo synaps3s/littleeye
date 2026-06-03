@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}LittleEye - Servers{% endblock %}
+
+{% block content %}
+<div class="pf-page-header">
+    <h1 class="pf-page-title">Monitored Servers</h1>
+    <p class="pf-page-subtitle">List of all active host machines sending configuration reports to the LittleEye console.</p>
+</div>
+
+<!-- Search and Filter Panel -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <label for="server-search-input" class="form-label small fw-bold text-muted">Search Servers</label>
+                <input type="text" id="server-search-input" class="form-control" placeholder="Search by hostname, ID or OS...">
+            </div>
+            <div class="col-md-4">
+                <label for="status-filter-select" class="form-label small fw-bold text-muted">Filter by Status</label>
+                <select id="status-filter-select" class="form-select">
+                    <option value="all">All statuses</option>
+                    <option value="clean">Clean</option>
+                    <option value="drift">Drift</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end h-100">
+                <button type="button" id="clear-filters-btn" class="btn btn-outline-primary w-100" style="margin-top: 1.9rem;">Clear Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="servers-table">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Hostname</th>
+                        <th>Server ID</th>
+                        <th>OS / Kernel / Arch</th>
+                        <th>Last Check</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if servers | length == 0 %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No servers registered yet. Connect your first agent to populate this list.
+                        </td>
+                    </tr>
+                    {% else %}
+                    {% for server in servers %}
+                    <tr class="server-row" data-hostname="{{ server.hostname | lower }}" data-id="{{ server.id | lower }}" data-status="{{ server.status | lower }}" data-os="{{ (server.os_name or '') | lower }}">
+                        <td class="ps-4">
+                            <span class="fw-bold text-dark">{{ server.hostname }}</span>
+                        </td>
+                        <td><code>{{ server.id }}</code></td>
+                        <td>
+                            <span class="small text-muted">{{ server.os_name or "Linux" }} ({{ server.arch or "x86_64" }})</span>
+                            <div class="small font-monospace text-secondary" style="font-size: 0.75rem;">{{ server.kernel or "Unknown Kernel" }}</div>
+                        </td>
+                        <td class="text-muted" style="font-size: 0.85rem;">{{ server.last_seen | format_datetime }}</td>
+                        <td>
+                            <span class="tag-{{ server.status.lower() }}">
+                                <span class="dot-{{ server.status.lower() }}"></span>{{ server.status | upper }}
+                            </span>
+                        </td>
+                        <td class="pe-4 text-end">
+                            <a href="/server/{{ server.id }}" class="btn btn-sm btn-outline-primary">View History & Diffs</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("server-search-input");
+        const statusFilter = document.getElementById("status-filter-select");
+        const clearBtn = document.getElementById("clear-filters-btn");
+        const rows = document.querySelectorAll(".server-row");
+
+        function filterTable() {
+            const query = searchInput.value.toLowerCase().trim();
+            const statusVal = statusFilter.value.toLowerCase();
+
+            rows.forEach(row => {
+                const host = row.getAttribute("data-hostname");
+                const id = row.getAttribute("data-id");
+                const status = row.getAttribute("data-status");
+                const os = row.getAttribute("data-os");
+
+                const matchesQuery = !query || host.includes(query) || id.includes(query) || os.includes(query);
+                const matchesStatus = statusVal === "all" || status === statusVal;
+
+                if (matchesQuery && matchesStatus) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        if (searchInput && statusFilter) {
+            searchInput.addEventListener("input", filterTable);
+            statusFilter.addEventListener("change", filterTable);
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener("click", function() {
+                searchInput.value = "";
+                statusFilter.value = "all";
+                filterTable();
+            });
+        }
+    });
+</script>
+{% endblock %}

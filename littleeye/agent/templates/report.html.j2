@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LittleEye - Drift Report for {{ hostname }}</title>
+    <!-- Bootstrap 5 loaded from CDN for layout only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            background-color: #f9fafb;
+            color: #111827;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -0.01em;
+        }
+        .header-section {
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+        }
+        .category-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+        .category-title {
+            font-weight: 600;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+            color: #111827;
+        }
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, monospace;
+            font-size: 0.8rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .diff-table th {
+            background-color: #f9fafb;
+            color: #4b5563;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+        }
+        .diff-table td {
+            padding: 0.25rem 0.75rem;
+            vertical-align: top;
+            line-height: 1.5;
+            white-space: pre;
+        }
+        .diff-line-num {
+            width: 45px;
+            text-align: right;
+            border-right: 1px solid #e5e7eb;
+            color: #9ca3af;
+            background-color: #f9fafb;
+            user-select: none;
+            padding-right: 0.5rem !important;
+        }
+        .diff-text {
+            padding-left: 0.75rem !important;
+        }
+        
+        /* Modern subtle diff coloring */
+        .diff-equal {
+            background-color: transparent;
+        }
+        .diff-replace {
+            background-color: #f8fafc;
+            color: #334155;
+            border-left: 3px solid #cbd5e1;
+        }
+        .diff-delete {
+            background-color: #fee2e2;
+            color: #7f1d1d;
+            border-left: 3px solid #f87171;
+        }
+        .diff-insert {
+            background-color: #dcfce7;
+            color: #14532d;
+            border-left: 3px solid #4ade80;
+        }
+        
+        /* Status tags */
+        .tag-critical, .tag-warning, .tag-info, .tag-clean, .tag-drift {
+            color: #111827;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            text-transform: uppercase;
+        }
+
+        .dot-critical, .dot-warning, .dot-info, .dot-clean, .dot-drift {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 6px;
+            display: inline-block;
+        }
+
+        .dot-critical { background-color: #ef4444; }
+        .dot-warning { background-color: #f59e0b; }
+        .dot-info { background-color: #3b82f6; }
+        .dot-clean { background-color: #22c55e; }
+        .dot-drift { background-color: #ef4444; }
+
+        .category-label {
+            color: #4b5563;
+            font-size: 0.725rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        details summary {
+            cursor: pointer;
+            outline: none;
+        }
+        details summary:hover {
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="header-section">
+            <h1 class="h2" style="font-weight: 700; letter-spacing: -0.03em;">LittleEye Drift Report</h1>
+            <p class="text-muted small">Host: <strong class="text-dark">{{ hostname }}</strong> | Generated: <strong class="text-dark">{{ timestamp }}</strong></p>
+        </div>
+
+        <!-- Severity Summary Cards -->
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-secondary">Total Findings</h5>
+                        <p class="display-6 font-weight-bold my-2" style="color: #111827;">{{ total_findings }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <span class="tag-critical"><span class="dot-critical"></span>Critical</span>
+                        <p class="display-6 font-weight-bold mt-3 mb-0" style="color: #111827;">{{ counts.critical }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <span class="tag-warning"><span class="dot-warning"></span>Warning</span>
+                        <p class="display-6 font-weight-bold mt-3 mb-0" style="color: #111827;">{{ counts.warning }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <span class="tag-info"><span class="dot-info"></span>Info</span>
+                        <p class="display-6 font-weight-bold mt-3 mb-0" style="color: #111827;">{{ counts.info }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drift Details -->
+        {% if total_findings == 0 %}
+        <div class="alert alert-success" role="alert">
+            No configuration drift has been detected. All monitored properties match their baselines.
+        </div>
+        {% else %}
+        
+        {% for cat, items in grouped_findings.items() %}
+        <div class="category-card shadow-sm">
+            <details open>
+                <summary class="h5 category-title">{{ cat.replace('_', ' ') | title }} ({{ items | length }})</summary>
+                <div class="mt-3">
+                    {% for item in items %}
+                    <div class="mb-4 p-3 rounded bg-white border" style="border-color: #e5e7eb !important;">
+                        <!-- Finding Header -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <div>
+                                <span class="category-label me-2">{{ cat }}</span>
+                                <code class="text-dark fw-semibold" style="font-size: 0.95rem;">{{ item.field }}</code>
+                            </div>
+                            <span class="tag-{{ item.severity.lower() }}">
+                                <span class="dot-{{ item.severity.lower() }}"></span>{{ item.severity }}
+                            </span>
+                        </div>
+                        
+                        <!-- Finding Body -->
+                        <div class="finding-body">
+                            {% if item.file_diff %}
+                            <!-- Side-by-Side File Content Diff -->
+                            <div class="border rounded bg-white overflow-auto" style="max-height: 400px; border-color: #e5e7eb !important;">
+                                <table class="diff-table">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">Baseline (Old)</th>
+                                            <th colspan="2">Current (New)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for line in item.file_diff %}
+                                        <tr class="diff-{{ line.type }}">
+                                            <td class="diff-line-num">{% if line.left_no %}{{ line.left_no }}{% endif %}</td>
+                                            <td class="diff-text">{% if line.left_text %}{{ line.left_text }}{% endif %}</td>
+                                            <td class="diff-line-num">{% if line.right_no %}{{ line.right_no }}{% endif %}</td>
+                                            <td class="diff-text">{% if line.right_text %}{{ line.right_text }}{% endif %}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <!-- Plain text values -->
+                            <div class="row g-2">
+                                <div class="col-md-6 border-end">
+                                    <small class="text-muted d-block mb-1">Old Value:</small>
+                                    {% if item.old_value is not none %}
+                                    <pre class="bg-light p-2 rounded mb-0 text-break text-muted font-monospace" style="font-size: 0.775rem; border: 1px solid #e5e7eb; white-space: pre-wrap;">{{ item.old_value }}</pre>
+                                    {% else %}
+                                    <span class="text-secondary font-monospace" style="font-size: 0.775rem;">[none]</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block mb-1">New Value:</small>
+                                    {% if item.new_value is not none %}
+                                    <pre class="bg-light p-2 rounded mb-0 text-break text-dark font-monospace" style="font-size: 0.775rem; border: 1px solid #e5e7eb; white-space: pre-wrap;">{{ item.new_value }}</pre>
+                                    {% else %}
+                                    <span class="text-secondary font-monospace" style="font-size: 0.775rem;">[none]</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+        </div>
+        {% endfor %}
+        
+        {% endif %}
+
+        <!-- Footer -->
+        <footer class="text-center text-muted mt-5 pt-4 border-top">
+            <p class="small">LittleEye Agent - Configured server: {{ hostname }}</p>
+        </footer>
+    </div>
+</body>
+</html>

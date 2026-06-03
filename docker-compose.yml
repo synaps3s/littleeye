@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  littleeye-dashboard:
+    image: python:3.10-slim
+    container_name: littleeye-dashboard
+    restart: always
+    working_dir: /app
+    volumes:
+      - .:/app
+      - dashboard-data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      - LITTLEEYE_DB_PATH=/app/data/littleeye.db
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.dashboard.txt &&
+             python3 -m uvicorn littleeye.dashboard.main:app --host 0.0.0.0 --port 8000"
+
+  littleeye-agent-web:
+    image: python:3.10-slim
+    container_name: littleeye-agent-web
+    hostname: web-server-production
+    restart: always
+    working_dir: /app
+    volumes:
+      - .:/app
+      - agent-web-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LITTLEEYE_DASHBOARD_URL=http://littleeye-dashboard:8000
+      - LITTLEEYE_AGENT_TOKEN=agent-web-token
+      - LITTLEEYE_CHECK_INTERVAL=5
+      - LITTLEEYE_BASELINE_DIR=data/baselines/web
+      - LITTLEEYE_REPORT_DIR=data/reports/web
+    depends_on:
+      - littleeye-dashboard
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.agent.txt &&
+             python3 -m littleeye.agent.cli --config /app/config.yaml daemon"
+
+  littleeye-agent-db:
+    image: python:3.10-slim
+    container_name: littleeye-agent-db
+    hostname: database-server-production
+    restart: always
+    working_dir: /app
+    volumes:
+      - .:/app
+      - agent-db-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LITTLEEYE_DASHBOARD_URL=http://littleeye-dashboard:8000
+      - LITTLEEYE_AGENT_TOKEN=agent-db-token
+      - LITTLEEYE_CHECK_INTERVAL=5
+      - LITTLEEYE_BASELINE_DIR=data/baselines/db
+      - LITTLEEYE_REPORT_DIR=data/reports/db
+    depends_on:
+      - littleeye-dashboard
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.agent.txt &&
+             python3 -m littleeye.agent.cli --config /app/config.yaml daemon"
+
+volumes:
+  dashboard-data:
+  agent-web-data:
+  agent-db-data:

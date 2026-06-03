@@ -1,0 +1,36 @@
+# LittleEye Agent Configuration Example
+
+# Interval in minutes between drift checks
+check_interval_minutes: 5
+
+# Centralized Dashboard URL
+dashboard_url: "http://littleeye-dashboard:8000"
+
+# Agent Authorization Token configured on the Dashboard
+agent_token: "default-agent-token"
+
+# Directory where baseline snapshots are stored
+baseline_dir: "data/baselines"
+
+# Directory where local HTML drift reports and diffs are saved
+report_dir: "data/reports"
+
+# Override default severity levels for configuration drift categories
+# Severity levels: critical, warning, info
+severity_thresholds:
+  files: "critical"
+  sudo_users: "critical"
+  ports: "warning"
+  services: "warning"
+  packages: "info"
+  env_vars: "info"
+
+# Critical system files monitored by the agent
+watched_files:
+  - "/etc/ssh/sshd_config"
+  - "/etc/passwd"
+  - "/etc/sudoers"
+  - "/etc/hosts"
+  - "/etc/fstab"
+  - "/etc/crontab"
+  - "/etc/iptables/rules.v4"

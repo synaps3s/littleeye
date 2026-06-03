@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+aiosqlite
+jinja2
+pyyaml
+python-multipart
+requests

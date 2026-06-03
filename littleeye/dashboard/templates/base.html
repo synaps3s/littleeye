@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LittleEye Dashboard{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <!-- Bootstrap 5 loaded from CDN for layout grid/flex utilities only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="pf-layout">
+        <!-- Masthead Header -->
+        <header class="pf-masthead">
+            <div class="pf-masthead__brand">
+                <a href="/" class="pf-masthead__logo-link">
+                    <img src="/static/favicon.png" alt="LittleEye" class="pf-masthead__logo-img">
+                    <span class="pf-masthead__logo-text">LittleEye</span>
+                </a>
+                <span class="pf-masthead__subtitle">Configuration Drift Detector</span>
+            </div>
+            <div class="pf-masthead__meta">
+                <span>Domain: <strong>littleeye.local</strong></span>
+                <span>System Status: <strong>Online</strong></span>
+            </div>
+        </header>
+        <!-- Brand Accent Bar -->
+        <div class="pf-brand-line"></div>
+
+        <div class="pf-container">
+            <!-- Sidebar Navigation -->
+            <aside class="pf-sidebar">
+                <nav class="pf-nav">
+                    <ul class="pf-nav-list">
+                        <li class="pf-nav-item">
+                            <a href="/" class="pf-nav-link {% if request.url.path == '/' %}active{% endif %}">
+                                <span class="pf-nav-icon">
+                                    <svg fill="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4.5-9h-2v5h2v-5zm-3 2h-2v3h2v-3zm6-4h-2v7h2V8z"/>
+                                    </svg>
+                                </span>
+                                <span class="pf-nav-text">Overview</span>
+                            </a>
+                        </li>
+                        <li class="pf-nav-item">
+                            <a href="/servers" class="pf-nav-link {% if request.url.path.startswith('/servers') or request.url.path.startswith('/server/') %}active{% endif %}">
+                                <span class="pf-nav-icon">
+                                    <svg fill="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19 15c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-2h14v2zm0-5H5V8c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2zm0-7H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 15H7v-2h10v2zm0-5H7V8h10v2z"/>
+                                    </svg>
+                                </span>
+                                <span class="pf-nav-text">Monitored Servers</span>
+                            </a>
+                        </li>
+                        <li class="pf-nav-item">
+                            <a href="/settings" class="pf-nav-link {% if request.url.path.startswith('/settings') %}active{% endif %}">
+                                <span class="pf-nav-icon">
+                                    <svg fill="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                                    </svg>
+                                </span>
+                                <span class="pf-nav-text">Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="pf-sidebar-footer">
+                    <div>LittleEye v1.2.0</div>
+                    <div>Enterprise Console</div>
+                </div>
+            </aside>
+
+            <!-- Main Content Container -->
+            <main class="pf-main">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
