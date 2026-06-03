@@ -2,6 +2,8 @@
 
 # LittleEye
 
+<img src="littleye.png" alt="LittleEye" width="160">
+
 **Configuration drift detection for Linux servers**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
